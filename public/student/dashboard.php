@@ -35,10 +35,11 @@ $menu_items = $itemsStmt->fetchAll();
 <nav class="topbar">
   <div class="brand">TIP KainTeen</div>
   <div class="user">
-    <span>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></span>
+    <span>Welcome, <?= htmlspecialchars($_SESSION['student_number']) ?></span>
     <a class="btn-ghost" href="<?= $BASE ?>/auth/logout.php">Logout</a>
   </div>
 </nav>
+
 
 <main class="layout">
   <aside class="sidebar">
