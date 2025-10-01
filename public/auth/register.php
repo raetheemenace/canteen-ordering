@@ -64,17 +64,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>T.I.P KainTeen! - Sign Up</title>
-  <link rel="shortcut icon" href="/assets/images/logo.png" type="image/x-icon">
-  <link rel="stylesheet" href="/assets/css/signup.css">
+
+  <!-- Corrected asset references -->
+  <link rel="shortcut icon" href="/canteen-ordering/public/assets/images/logo.png" type="image/x-icon">
+  <link rel="stylesheet" href="/canteen-ordering/public/assets/css/signup.css">
 </head>
 <body>
   <video class="bg-video" autoplay loop muted>
-    <source src="/assets/videos/bg.mp4" type="video/mp4">
+    <source src="/canteen-ordering/public/assets/videos/bg.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 
   <div class="container">
-    <img src="/assets/images/logo.png" class="logo" alt="Logo">
+    <img src="/canteen-ordering/public/assets/images/logo.png" class="logo" alt="Logo">
     <p class="subtitle">From Click to Kain in No Time!</p>
     <h1>Create Your Account</h1>
 
@@ -113,9 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <button type="submit">Sign Up</button>
     </form>
 
-    <p class="signin">Already have an account? <a href="/auth/login.php">Sign In here</a>.</p>
+    <p class="signin">Already have an account? <a href="/canteen-ordering/public/auth/login.php">Sign In here</a>.</p>
   </div>
 
-  <script src="/assets/js/signup.js"></script>
+  <script src="/canteen-ordering/public/assets/js/signup.js"></script>
 </body>
 </html>
