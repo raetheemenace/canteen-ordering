@@ -132,4 +132,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</label>
       </div>
 
-      <button type="submit">Sig
+      <button type="submit">Sign Up</button>
+    </form>
+
+    <p class="signin">Already have an account? <a href="/canteen-ordering/public/auth/login.php">Sign In here</a>.</p>
+  </div>
+
+  <script src="/canteen-ordering/public/assets/js/signup.js"></script>
+</body>
+</html>
