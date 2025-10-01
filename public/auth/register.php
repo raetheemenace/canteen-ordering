@@ -1,8 +1,37 @@
 <?php
-// public/auth/register.php
+// public/auth/register.php (robust include + debug)
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 session_start();
-require_once __DIR__ . '/../../src/config.php';
-require_once __DIR__ . '/../../src/database.php';
+
+// Try multiple candidate paths to locate src/database.php reliably
+$possible_db_paths = [
+    __DIR__ . '/../../src/database.php', // from public/auth => project/src
+    __DIR__ . '/../src/database.php',    // from public => project/src (if used there)
+    __DIR__ . '/../../../src/database.php', // extra fallback
+];
+
+$db_file = null;
+foreach ($possible_db_paths as $p) {
+    if (file_exists($p)) { $db_file = $p; break; }
+}
+if (!$db_file) {
+    // helpful error if include missing
+    http_response_code(500);
+    echo "<h2>Configuration error</h2>";
+    echo "<p>Could not find <code>src/database.php</code> using tried paths:</p><pre>" . htmlspecialchars(implode("\n", $possible_db_paths)) . "</pre>";
+    exit;
+}
+require_once $db_file;
+
+// ensure function exists
+if (!function_exists('getPDO')) {
+    http_response_code(500);
+    echo "<h2>Configuration error</h2><p><code>getPDO()</code> not found in {$db_file}. Open that file and ensure it defines getPDO().</p>";
+    exit;
+}
 
 $errors = [];
 $success = '';
@@ -23,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Student number must be exactly 7 digits.";
     }
 
-    // Validate passwords
+    // Validate password
     if (strlen($password) < 6) {
         $errors[] = "Password must be at least 6 characters.";
     }
@@ -42,20 +71,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = "Student number or email already registered.";
             } else {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-
-                $stmt = $pdo->prepare("INSERT INTO users (role, student_number, username, email, password_hash, status, created_at) VALUES ('student', ?, ?, ?, ?, 'active', NOW())");
-                // we store student_number and also set username to student_number for compatibility
-                $stmt->execute([
-                    $student_number,
-                    $student_number,    // username column kept for legacy if present
-                    $email,
-                    $hash
-                ]);
-
+                // Insert — adapt to your exact users schema: here we assume columns exist: student_number,email,password_hash,role,status,created_at
+                $stmt = $pdo->prepare("INSERT INTO users (role, student_number, email, password_hash, status, created_at) VALUES ('student', ?, ?, ?, 'active', NOW())");
+                $stmt->execute([$student_number, $email, $hash]);
                 $success = "Registration successful — you may now log in.";
             }
         } catch (Exception $e) {
-            $errors[] = "Database error: " . $e->getMessage();
+            $errors[] = "DB error: " . $e->getMessage();
         }
     }
 }
@@ -64,17 +86,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <title>Register - TIP KainTeen</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Register — TIP KainTeen</title>
-  <link rel="stylesheet" href="<?= rtrim(BASE_URL, '/') ?>/assets/css/signup.css">
+  <link rel="stylesheet" href="/canteen-ordering/public/assets/css/signup.css">
 </head>
 <body>
   <video class="bg-video" autoplay loop muted>
-    <source src="<?= rtrim(BASE_URL, '/') ?>/assets/videos/bg.mp4" type="video/mp4">
+    <source src="/canteen-ordering/public/assets/videos/bg.mp4" type="video/mp4">
   </video>
 
   <div class="container">
-    <img src="<?= rtrim(BASE_URL, '/') ?>/assets/images/logo.png" class="logo" alt="Logo">
+    <img src="/canteen-ordering/public/assets/images/logo.png" class="logo" alt="Logo">
     <p class="subtitle">From Click to Kain in No Time!</p>
     <h1>Create Your Account</h1>
 
@@ -87,12 +109,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="post" action="">
       <div class="form-group">
         <label for="email">TIP Email</label>
-        <input type="email" id="email" name="email" placeholder="Enter TIP Email" required value="<?= htmlspecialchars($email ?? '') ?>">
+        <input type="email" id="email" name="email" placeholder="Enter TIP Email" required value="<?= isset($email) ? htmlspecialchars($email) : '' ?>">
       </div>
 
       <div class="form-group">
         <label for="student_number">Student Number</label>
-        <input type="text" id="student_number" name="student_number" placeholder="7 Digit Student No." required pattern="\d{7}" value="<?= htmlspecialchars($student_number ?? '') ?>">
+        <input type="text" id="student_number" name="student_number" placeholder="7 Digit Student No." required pattern="\d{7}" value="<?= isset($student_number) ? htmlspecialchars($student_number) : '' ?>">
       </div>
 
       <div class="form-group">
@@ -110,12 +132,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</label>
       </div>
 
-      <button type="submit">Sign Up</button>
-    </form>
-
-    <p class="signin">Already have an account? <a href="<?= rtrim(BASE_URL, '/') ?>/auth/login.php">Sign In here</a>.</p>
-  </div>
-
-  <script src="<?= rtrim(BASE_URL, '/') ?>/assets/js/signup.js"></script>
-</body>
-</html>
+      <button type="submit">Sig
