@@ -3,8 +3,8 @@
 session_start();
 require_once __DIR__ . '/../../src/database.php';
 
-// base URL used in asset/endpoint references (adjust when public is document root)
-$BASE = '/canteen-ordering/public';
+// base URL used in asset/endpoint references
+$BASE = '/canteen-ordering/public'; // <-- FIXED folder name
 
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'student') {
     header("Location: {$BASE}/auth/login.php");
@@ -15,7 +15,11 @@ $pdo = getPDO();
 
 // fetch categories and items
 $categories = $pdo->query("SELECT id, name FROM categories ORDER BY name")->fetchAll();
-$itemsStmt = $pdo->prepare("SELECT m.*, c.name AS category FROM menu_items m LEFT JOIN categories c ON m.category_id = c.id WHERE m.is_active = 1 ORDER BY m.name");
+$itemsStmt = $pdo->prepare("SELECT m.*, c.name AS category 
+                            FROM menu_items m 
+                            LEFT JOIN categories c ON m.category_id = c.id 
+                            WHERE m.is_active = 1 
+                            ORDER BY m.name");
 $itemsStmt->execute();
 $menu_items = $itemsStmt->fetchAll();
 ?>

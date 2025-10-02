@@ -1,5 +1,6 @@
 <?php
 // public/auth/admin_login.php
+// CLEAN final version - no debug output before headers
 session_start();
 require_once __DIR__ . '/../../src/database.php';
 
@@ -13,33 +14,39 @@ if (isset($_SESSION['user_id']) && ($_SESSION['role'] ?? '') === 'admin') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // retrieve and trim
     $student_number = trim($_POST['student_number'] ?? '');
     $password = $_POST['password'] ?? '';
 
     if ($student_number === '' || $password === '') {
         $error = "Please enter both fields.";
     } else {
-        $pdo = getPDO();
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE student_number = ? AND role = 'admin' LIMIT 1");
-        $stmt->execute([$student_number]);
-        $user = $stmt->fetch();
+        try {
+            $pdo = getPDO();
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE student_number = ? AND role = 'admin' LIMIT 1");
+            $stmt->execute([$student_number]);
+            $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password_hash'])) {
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['student_number'] = $user['student_number'];
-            $_SESSION['role'] = 'admin';
+            if ($user && password_verify($password, $user['password_hash'])) {
+                // login success: set session and redirect
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['student_number'] = $user['student_number'];
+                $_SESSION['role'] = 'admin';
 
-            // ✅ Redirect straight to dashboard
-            header("Location: {$BASE}/admin/dashboard.php");
-            exit;
-        } else {
-            $error = "Invalid admin credentials.";
+                header("Location: {$BASE}/admin/dashboard.php");
+                exit;
+            } else {
+                $error = "Invalid admin credentials.";
+            }
+        } catch (Exception $e) {
+            // show a friendly message; log full error to Apache error log
+            error_log("admin_login error: " . $e->getMessage());
+            $error = "An internal error occurred. Try again later.";
         }
     }
 }
-?>
-<!doctype html>
+?><!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -60,10 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="popup error"><?= htmlspecialchars($error) ?></div>
   <?php endif; ?>
 
-  <form method="post">
+  <form method="post" autocomplete="off">
     <div class="form-group">
       <label for="student-number">Admin ID (Student No.)</label>
-      <input type="text" id="student-number" name="student_number" placeholder="7 Digit Admin No." required>
+      <input type="text" id="student-number" name="student_number" placeholder="7 Digit Admin No." required pattern="\d{7}">
     </div>
 
     <div class="form-group">

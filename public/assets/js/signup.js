@@ -1,17 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("#register-form");
+  const form = document.querySelector("form");
   const emailInput = document.getElementById("email");
   const studentNumberInput = document.getElementById("student_number");
   const passwordInput = document.getElementById("password");
   const confirmPasswordInput = document.getElementById("confirm_password");
 
-  // If any field is missing, stop
+  // If form or inputs are missing, stop script (avoid null errors)
   if (!form || !emailInput || !studentNumberInput || !passwordInput || !confirmPasswordInput) {
     console.error("Registration form elements not found. Check HTML IDs.");
     return;
   }
 
-  // Live display under student number (like login page)
+  // Live feedback under student number field
   const liveDisplay = document.createElement("p");
   liveDisplay.style.color = "yellow";
   liveDisplay.style.fontSize = "14px";
@@ -23,60 +23,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle form submission
   form.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const email = emailInput.value.trim();
     const studentNumber = studentNumberInput.value.trim();
-    const password = passwordInput.value.trim();
-    const confirmPassword = confirmPasswordInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
 
-    // Validation
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      showPopup("Please enter a valid email address.", true);
-      return;
-    }
     if (!/^[0-9]{7}$/.test(studentNumber)) {
+      event.preventDefault();
       showPopup("Student number must be exactly 7 digits.", true);
       return;
     }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      event.preventDefault();
+      showPopup("Invalid email address.", true);
+      return;
+    }
     if (password.length < 6) {
+      event.preventDefault();
       showPopup("Password must be at least 6 characters.", true);
       return;
     }
     if (password !== confirmPassword) {
+      event.preventDefault();
       showPopup("Passwords do not match.", true);
       return;
     }
-
-    // Send registration data to backend
-    fetch("/canteen-ordering/public/auth/register.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        email: email,
-        student_number: studentNumber,
-        password: password,
-        confirm_password: confirmPassword
-      })
-    })
-      .then((response) => response.text())
-      .then((data) => {
-        console.log("Server Response:", data);
-
-        if (data.startsWith("success|")) {
-          const [, redirectUrl] = data.split("|");
-          showPopup("Registration successful! Redirecting to login...");
-          setTimeout(() => {
-            window.location.href = redirectUrl;
-          }, 2000);
-        } else {
-          showPopup(data, true);
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        showPopup("Something went wrong. Try again later.", true);
-      });
   });
 
   // Popup helper
@@ -86,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
     popup.textContent = message;
     document.body.appendChild(popup);
 
+    // fade in/out (CSS handles opacity transition)
     setTimeout(() => (popup.style.opacity = "1"), 50);
     setTimeout(() => {
       popup.style.opacity = "0";
